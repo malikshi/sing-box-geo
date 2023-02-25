@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
- 
+
 jobs:
   build:
     name: Build
@@ -77,3 +77,10 @@ jobs:
           asset_path: ./sing-geoip/geoip-cn.db
           asset_name: geoip-cn.db
           asset_content_type: application/octet-stream
+
+      - name: Delete Old Release
+        uses: dev-drprasad/delete-older-releases@v0.2.0
+        with:
+          keep_latest: 2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

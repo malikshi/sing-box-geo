@@ -215,7 +215,7 @@ func release(source string, destination string, output string) error {
 }
 
 func main() {
-	err := release("Loyalsoldier/v2ray-rules-dat", "lyc8503/sing-geosite", "geosite.db")
+	err := release("malikshi/v2ray-rules-dat", "malikshi/sing-geosite", "geosite.db")
 	if err != nil {
 		logrus.Fatal(err)
 	}
