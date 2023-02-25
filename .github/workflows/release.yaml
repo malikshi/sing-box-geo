@@ -33,6 +33,13 @@ jobs:
           cd sing-geoip
           go run -v .
       
+      - name: Set timezone to WIB Jakarta
+        uses: szenius/set-timezone@v1.0
+        with:
+          timezoneLinux: "Asia/Jakarta"
+          timezoneMacos: "Asia/Jakarta"
+          timezoneWindows: "Indonesia Standard Time"
+
       - name: Get current time
         id: time
         run: echo "::set-output name=time::$(date +'%Y%m%d%H%M%S')"
