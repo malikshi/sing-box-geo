@@ -1,11 +1,13 @@
 name: Release
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "30 04 * * FRI"
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**/README.md"
 
 jobs:
   build:
