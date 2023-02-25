@@ -1,8 +1,6 @@
-name: Release
+name: Synchronization GEO Asset
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "30 04 * * FRI"
   push:
     branches:
       - master
