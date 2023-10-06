@@ -92,3 +92,21 @@ jobs:
           keep_latest: 1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload to Telegram
+        run: |
+          BOT_TOKEN=$TELEGRAM_BOT_TOKEN
+          CHAT_ID=$TELEGRAM_CHAT_ID
+          FILE_PATH_GEOSITE="./sing-geosite/geosite.db"
+          FILE_PATH_GEOIP="./sing-geoip/geoip.db"
+          FILE_PATH_GEOIP_CN="./sing-geoip/geoip-cn.db"
+          CURRENT_DATE=$(date +'%Y-%m-%d %H:%M:%S')
+          CAPTION_GEOSITE="geosite.db - Created on $CURRENT_DATE"
+          CAPTION_GEOIP="geoip.db - Created on $CURRENT_DATE"
+          CAPTION_GEOIP_CN="geoip-cn.db - Created on $CURRENT_DATE"
+          curl -F "chat_id=$CHAT_ID" -F "document=@$FILE_PATH_GEOSITE" -F "caption=$CAPTION_GEOSITE" https://api.telegram.org/bot$BOT_TOKEN/sendDocument
+          curl -F "chat_id=$CHAT_ID" -F "document=@$FILE_PATH_GEOIP" -F "caption=$CAPTION_GEOIP" https://api.telegram.org/bot$BOT_TOKEN/sendDocument
+          curl -F "chat_id=$CHAT_ID" -F "document=@$FILE_PATH_GEOIP_CN" -F "caption=$CAPTION_GEOIP_CN" https://api.telegram.org/bot$BOT_TOKEN/sendDocument
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
