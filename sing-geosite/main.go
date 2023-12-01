@@ -19,6 +19,7 @@ import (
 
 	"github.com/google/go-github/v45/github"
 	"github.com/sagernet/sing-box/log"
+	"github.com/sirupsen/logrus"
 	"github.com/v2fly/v2ray-core/v5/app/router/routercommon"
 	"google.golang.org/protobuf/proto"
 )
