@@ -37,13 +37,17 @@ jobs:
           cd sing-geoip
           go run -v .
 
-      - name: Release rule sets
-        run: .github/release-rule-set-geosite.sh
+      - name: Release rule sets geosite
+        run: |
+          chmod +x .github/release-rule-set-geosite.sh
+          sh .github/release-rule-set-geosite.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Release rule sets
-        run: .github/release-rule-set-geoip.sh
+      - name: Release rule sets geoip
+        run: |
+          chmod +x .github/release-rule-set-geoip.sh
+          sh .github/release-rule-set-geoip.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
