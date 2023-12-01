@@ -1,5 +1,4 @@
 module sing-geoip
-
 go 1.18
 
 require (
@@ -9,7 +8,6 @@ require (
 	github.com/oschwald/maxminddb-golang v1.12.0
 	github.com/sagernet/sing v0.2.18-0.20231129075305-eb56a60214be
 	github.com/sagernet/sing-box v1.6.8-0.20231129123339-5a56487cf544
-	github.com/sirupsen/logrus
 )
 
 require (
