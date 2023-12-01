@@ -2,7 +2,7 @@
 
 set -e -o pipefail
 
-cd /sing-geoip/rule-set-geoip
+cd sing-geoip/rule-set-geoip
 git init
 git config --local user.email "github-action@users.noreply.github.com"
 git config --local user.name "GitHub Action"
