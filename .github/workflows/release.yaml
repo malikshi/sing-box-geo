@@ -13,15 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          
+
+      - name: Get latest go version
+        id: version
+        run: |
+          echo ::set-output name=go_version::$(curl -s https://raw.githubusercontent.com/actions/go-versions/main/versions-manifest.json | grep -oE '"version": "[0-9]{1}.[0-9]{1,}(.[0-9]{1,})?"' | head -1 | cut -d':' -f2 | sed 's/ //g; s/"//g')
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v2
         with:
-          go-version: "1.19.5"
-      
+          go-version: ${{ steps.version.outputs.go_version }}
+
       - name: Build geosite
         id: build_site
         run: |
@@ -32,7 +36,7 @@ jobs:
         run: |
           cd sing-geoip
           go run -v .
-      
+
       - name: Release rule sets
         run: .github/release-rule-set-geosite.sh
         env:
@@ -42,7 +46,7 @@ jobs:
         run: .github/release-rule-set-geoip.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Set timezone to WIB Jakarta
         uses: szenius/set-timezone@v1.2
         with:
@@ -53,7 +57,7 @@ jobs:
       - name: Get current time
         id: time
         run: echo "::set-output name=time::$(date +'%Y%m%d%H%M%S')"
-      
+
       - name: Create a release
         id: create_release
         uses: actions/create-release@v1
@@ -64,7 +68,7 @@ jobs:
           release_name: ${{ steps.time.outputs.time }}
           draft: false
           prerelease: false
-      
+
       - name: Release geosite.db
         uses: actions/upload-release-asset@v1
         env:
@@ -74,7 +78,7 @@ jobs:
           asset_path: ./sing-geosite/geosite.db
           asset_name: geosite.db
           asset_content_type: application/octet-stream
-      
+
       - name: Release geoip.db
         uses: actions/upload-release-asset@v1
         env:
@@ -84,7 +88,7 @@ jobs:
           asset_path: ./sing-geoip/geoip.db
           asset_name: geoip.db
           asset_content_type: application/octet-stream
-      
+
       - name: Release geoip-cn.db
         uses: actions/upload-release-asset@v1
         env:
