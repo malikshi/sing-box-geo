@@ -2,7 +2,7 @@
 
 set -e -o pipefail
 
-cd rule-set-geosite
+cd /sing-geosite/rule-set-geosite
 git init
 git config --local user.email "github-action@users.noreply.github.com"
 git config --local user.name "GitHub Action"
