@@ -19,7 +19,6 @@ import (
 
 	"github.com/google/go-github/v45/github"
 	"github.com/sagernet/sing-box/log"
-	"github.com/sirupsen/logrus"
 	"github.com/v2fly/v2ray-core/v5/app/router/routercommon"
 	"google.golang.org/protobuf/proto"
 )
@@ -48,7 +47,7 @@ func fetch(from string) (*github.RepositoryRelease, error) {
 }
 
 func get(downloadURL *string) ([]byte, error) {
-	logrus.Info("download ", *downloadURL)
+	log.Info("download ", *downloadURL)
 	response, err := http.Get(*downloadURL)
 	if err != nil {
 		return nil, err
@@ -255,6 +254,6 @@ func release(source string, destination string, output string, ruleSetOutput str
 func main() {
 	err := release("malikshi/v2ray-rules-dat", "malikshi/sing-geosite", "geosite.db", "rule-set-geosite")
 	if err != nil {
-		logrus.Fatal(err)
+		log.Fatal(err)
 	}
 }
