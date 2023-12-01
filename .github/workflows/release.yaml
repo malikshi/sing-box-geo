@@ -33,6 +33,16 @@ jobs:
           cd sing-geoip
           go run -v .
       
+      - name: Release rule sets
+        run: .github/release-rule-set-geosite.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release rule sets
+        run: .github/release-rule-set-geoip.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Set timezone to WIB Jakarta
         uses: szenius/set-timezone@v1.2
         with:
