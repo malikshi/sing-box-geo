@@ -103,14 +103,14 @@ jobs:
 
       - name: Purge rule-set-geosite jsdelivr CDN
         run: |
-          cd publish || exit 1
+          cd sing-geosite/rule-set-geosite || exit 1
           for file in $(ls); do
             curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@rule-set-geosite/${file}"
           done
 
       - name: Purge rule-set-geoip jsdelivr CDN
         run: |
-          cd publish || exit 1
+          cd sing-geoip/rule-set-geoip || exit 1
           for file in $(ls); do
             curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@rule-set-geoip/${file}"
           done
