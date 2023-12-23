@@ -32,6 +32,7 @@ jobs:
           cd sing-geosite
           go run -v .
           sha256sum geosite.db > geosite.db.sha256sum
+
       - name: Build geoip
         id: build_ip
         run: |
@@ -84,7 +85,7 @@ jobs:
           asset_path: ./sing-geosite/geosite.db
           asset_name: geosite.db
           asset_content_type: application/octet-stream
-      
+
       - name: Release geosite.db.sha256sum
         uses: actions/upload-release-asset@v1
         env:
