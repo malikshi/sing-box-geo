@@ -31,11 +31,13 @@ jobs:
         run: |
           cd sing-geosite
           go run -v .
+          sha256sum geosite.db > geosite.db.sha256sum
       - name: Build geoip
         id: build_ip
         run: |
           cd sing-geoip
           go run -v .
+          sha256sum geoip.db > geoip.db.sha256sum
 
       - name: Release rule sets geosite
         run: |
@@ -82,6 +84,16 @@ jobs:
           asset_path: ./sing-geosite/geosite.db
           asset_name: geosite.db
           asset_content_type: application/octet-stream
+      
+      - name: Release geosite.db.sha256sum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./sing-geosite/geosite.db.sha256sum
+          asset_name: geosite.db.sha256sum
+          asset_content_type: application/octet-stream
 
       - name: Release geoip.db
         uses: actions/upload-release-asset@v1
@@ -91,6 +103,16 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./sing-geoip/geoip.db
           asset_name: geoip.db
+          asset_content_type: application/octet-stream
+
+      - name: Release geoip.db.sha256sum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./sing-geoip/geoip.db.sha256sum
+          asset_name: geoip.db.sha256sum
           asset_content_type: application/octet-stream
 
       - name: Delete Old Release
