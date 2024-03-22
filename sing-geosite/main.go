@@ -8,17 +8,18 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/sagernet/sing-box/common/geosite"
 	"github.com/sagernet/sing-box/common/srs"
 	C "github.com/sagernet/sing-box/constant"
+	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
 
 	"github.com/google/go-github/v45/github"
-	"github.com/sagernet/sing-box/log"
 	"github.com/v2fly/v2ray-core/v5/app/router/routercommon"
 	"google.golang.org/protobuf/proto"
 )
@@ -169,12 +170,115 @@ func parse(vGeositeData []byte) (map[string][]geosite.Item, error) {
 	return domainMap, nil
 }
 
-func generate(release *github.RepositoryRelease, output string, ruleSetOutput string) error {
-	outputFile, err := os.Create(output)
-	if err != nil {
-		return err
+type filteredCodePair struct {
+	code    string
+	badCode string
+}
+
+func filterTags(data map[string][]geosite.Item) {
+	var codeList []string
+	for code := range data {
+		codeList = append(codeList, code)
 	}
-	defer outputFile.Close()
+	var badCodeList []filteredCodePair
+	var filteredCodeMap []string
+	var mergedCodeMap []string
+	for _, code := range codeList {
+		codeParts := strings.Split(code, "@")
+		if len(codeParts) != 2 {
+			continue
+		}
+		leftParts := strings.Split(codeParts[0], "-")
+		var lastName string
+		if len(leftParts) > 1 {
+			lastName = leftParts[len(leftParts)-1]
+		}
+		if lastName == "" {
+			lastName = codeParts[0]
+		}
+		if lastName == codeParts[1] {
+			delete(data, code)
+			filteredCodeMap = append(filteredCodeMap, code)
+			continue
+		}
+		if "!"+lastName == codeParts[1] {
+			badCodeList = append(badCodeList, filteredCodePair{
+				code:    codeParts[0],
+				badCode: code,
+			})
+		} else if lastName == "!"+codeParts[1] {
+			badCodeList = append(badCodeList, filteredCodePair{
+				code:    codeParts[0],
+				badCode: code,
+			})
+		}
+	}
+	for _, it := range badCodeList {
+		badList := data[it.badCode]
+		if badList == nil {
+			panic("bad list not found: " + it.badCode)
+		}
+		delete(data, it.badCode)
+		newMap := make(map[geosite.Item]bool)
+		for _, item := range data[it.code] {
+			newMap[item] = true
+		}
+		for _, item := range badList {
+			delete(newMap, item)
+		}
+		newList := make([]geosite.Item, 0, len(newMap))
+		for item := range newMap {
+			newList = append(newList, item)
+		}
+		data[it.code] = newList
+		mergedCodeMap = append(mergedCodeMap, it.badCode)
+	}
+	sort.Strings(filteredCodeMap)
+	sort.Strings(mergedCodeMap)
+	os.Stderr.WriteString("filtered " + strings.Join(filteredCodeMap, ",") + "\n")
+	os.Stderr.WriteString("merged " + strings.Join(mergedCodeMap, ",") + "\n")
+}
+
+func mergeTags(data map[string][]geosite.Item) {
+	var codeList []string
+	for code := range data {
+		codeList = append(codeList, code)
+	}
+	var cnCodeList []string
+	for _, code := range codeList {
+		codeParts := strings.Split(code, "@")
+		if len(codeParts) != 2 {
+			continue
+		}
+		if codeParts[1] != "cn" {
+			continue
+		}
+		if !strings.HasPrefix(codeParts[0], "category-") {
+			continue
+		}
+		if strings.HasSuffix(codeParts[0], "-cn") || strings.HasSuffix(codeParts[0], "-!cn") {
+			continue
+		}
+		cnCodeList = append(cnCodeList, code)
+	}
+	newMap := make(map[geosite.Item]bool)
+	for _, item := range data["geolocation-cn"] {
+		newMap[item] = true
+	}
+	for _, code := range cnCodeList {
+		for _, item := range data[code] {
+			newMap[item] = true
+		}
+	}
+	newList := make([]geosite.Item, 0, len(newMap))
+	for item := range newMap {
+		newList = append(newList, item)
+	}
+	data["geolocation-cn"] = newList
+	println("merged cn categories: " + strings.Join(cnCodeList, ","))
+}
+
+func generate(release *github.RepositoryRelease, output string, cnOutput string, ruleSetOutput string) error {
 	vData, err := download(release)
 	if err != nil {
 		return err
@@ -183,9 +287,32 @@ func generate(release *github.RepositoryRelease, output string, ruleSetOutput st
 	if err != nil {
 		return err
 	}
+	filterTags(domainMap)
+	mergeTags(domainMap)
 	outputPath, _ := filepath.Abs(output)
 	os.Stderr.WriteString("write " + outputPath + "\n")
+	outputFile, err := os.Create(output)
+	if err != nil {
+		return err
+	}
+	defer outputFile.Close()
 	err = geosite.Write(outputFile, domainMap)
+	if err != nil {
+		return err
+	}
+	cnCodes := []string{
+		"geolocation-cn",
+	}
+	cnDomainMap := make(map[string][]geosite.Item)
+	for _, cnCode := range cnCodes {
+		cnDomainMap[cnCode] = domainMap[cnCode]
+	}
+	cnOutputFile, err := os.Create(cnOutput)
+	if err != nil {
+		return err
+	}
+	defer cnOutputFile.Close()
+	err = geosite.Write(cnOutputFile, cnDomainMap)
 	if err != nil {
 		return err
 	}
@@ -209,7 +336,7 @@ func generate(release *github.RepositoryRelease, output string, ruleSetOutput st
 			},
 		}
 		srsPath, _ := filepath.Abs(filepath.Join(ruleSetOutput, "geosite-"+code+".srs"))
-		os.Stderr.WriteString("write " + srsPath + "\n")
+		//os.Stderr.WriteString("write " + srsPath + "\n")
 		outputRuleSet, err := os.Create(srsPath)
 		if err != nil {
 			return err
@@ -228,7 +355,7 @@ func setActionOutput(name string, content string) {
 	os.Stdout.WriteString("::set-output name=" + name + "::" + content + "\n")
 }
 
-func release(source string, destination string, output string, ruleSetOutput string) error {
+func release(source string, destination string, output string, cnOutput string, ruleSetOutput string) error {
 	sourceRelease, err := fetch(source)
 	if err != nil {
 		return err
@@ -243,7 +370,7 @@ func release(source string, destination string, output string, ruleSetOutput str
 			return nil
 		}
 	}
-	err = generate(sourceRelease, output, ruleSetOutput)
+	err = generate(sourceRelease, output, cnOutput, ruleSetOutput)
 	if err != nil {
 		return err
 	}
@@ -252,7 +379,13 @@ func release(source string, destination string, output string, ruleSetOutput str
 }
 
 func main() {
-	err := release("malikshi/v2ray-rules-dat", "malikshi/sing-geosite", "geosite.db", "rule-set-geosite")
+	err := release(
+		"malikshi/v2ray-rules-dat",
+		"malikshi/sing-geosite",
+		"geosite.db",
+		"geosite-cn.db",
+		"rule-set-geosite",
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
