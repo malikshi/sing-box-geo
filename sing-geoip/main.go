@@ -190,11 +190,21 @@ func release(source string, destination string, output string, ruleSetOutput str
 	for code := range countryMap {
 		allCodes = append(allCodes, code)
 	}
+
 	writer, err := newWriter(metadata, allCodes)
 	if err != nil {
 		return err
 	}
 	err = write(writer, countryMap, output, nil)
+	if err != nil {
+		return err
+	}
+
+	writer, err = newWriter(metadata, []string{"cn"})
+	if err != nil {
+		return err
+	}
+	err = write(writer, countryMap, "geoip-cn.db", []string{"cn"})
 	if err != nil {
 		return err
 	}
@@ -230,6 +240,7 @@ func release(source string, destination string, output string, ruleSetOutput str
 		}
 		outputRuleSet.Close()
 	}
+
 	setActionOutput("tag", *sourceRelease.Name)
 	return nil
 }
