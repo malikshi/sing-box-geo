@@ -2,19 +2,12 @@
 
 set -e -o pipefail
 
-function releaseRuleSet() {
-    dirName=$1
-    pushd $dirName
-    git init
-    git config --local user.email "github-action@users.noreply.github.com"
-    git config --local user.name "GitHub Action"
-    git remote add origin https://github-action:$GITHUB_TOKEN@github.com/malikshi/sing-box-geo.git
-    git branch -M $dirName
-    git add .
-    git commit -m "Update rule-set"
-    git push -f origin $dirName
-    popd
-}
-
-releaseRuleSet rule-set-geosite
-releaseRuleSet rule-set-geosite-unstable
+cd sing-geosite/rule-set-geosite
+git init
+git config --local user.email "github-action@users.noreply.github.com"
+git config --local user.name "GitHub Action"
+git remote add origin https://github-action:$GITHUB_TOKEN@github.com/malikshi/sing-box-geo.git
+git branch -M rule-set-geosite
+git add .
+git commit -m "Update rule-set-geosite"
+git push -f origin rule-set-geosite
