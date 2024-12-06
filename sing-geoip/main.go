@@ -39,21 +39,12 @@ func init() {
 }
 
 func fetch(from string) (*github.RepositoryRelease, error) {
-	fixedRelease := os.Getenv("FIXED_RELEASE")
 	names := strings.SplitN(from, "/", 2)
-	if fixedRelease != "" {
-		latestRelease, _, err := githubClient.Repositories.GetReleaseByTag(context.Background(), names[0], names[1], fixedRelease)
-		if err != nil {
-			return nil, err
-		}
-		return latestRelease, err
-	} else {
-		latestRelease, _, err := githubClient.Repositories.GetLatestRelease(context.Background(), names[0], names[1])
-		if err != nil {
-			return nil, err
-		}
-		return latestRelease, err
+	latestRelease, _, err := githubClient.Repositories.GetLatestRelease(context.Background(), names[0], names[1])
+	if err != nil {
+		return nil, err
 	}
+	return latestRelease, err
 }
 
 func get(downloadURL *string) ([]byte, error) {
@@ -91,8 +82,18 @@ func parse(binary []byte) (metadata maxminddb.Metadata, countryMap map[string][]
 		if err != nil {
 			return
 		}
-		// idk why
-		code := strings.ToLower(country.RegisteredCountry.IsoCode)
+		var code string
+		if country.Country.IsoCode != "" {
+			code = strings.ToLower(country.Country.IsoCode)
+		} else if country.RegisteredCountry.IsoCode != "" {
+			code = strings.ToLower(country.RegisteredCountry.IsoCode)
+		} else if country.RepresentedCountry.IsoCode != "" {
+			code = strings.ToLower(country.RepresentedCountry.IsoCode)
+		} else if country.Continent.Code != "" {
+			code = strings.ToLower(country.Continent.Code)
+		} else {
+			continue
+		}
 		countryMap[code] = append(countryMap[code], ipNet)
 	}
 	err = networks.Err()
